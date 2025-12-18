@@ -1,0 +1,35 @@
+const leaveRequestSchema = new Schema({
+  student_id: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+  from_date: {
+    type: Date,
+    required: true
+  },
+  to_date: {
+    type: Date,
+    required: true
+  },
+  destination: {
+    type: String,
+    trim: true
+  },
+  reason: {
+    type: String,
+    trim: true
+  },
+  status: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending"
+  },
+  approved_by: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  }
+}, { timestamps: true });
+
+export const LeaveRequest = model("LeaveRequest", leaveRequestSchema);
