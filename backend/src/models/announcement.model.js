@@ -1,26 +1,24 @@
+import mongoose, {Schema} from "mongoose";
+
 const announcementSchema = new Schema({
   title: {
     type: String,
     required: true
   },
+  notice_url: {
+    type: String,
+  },
   message: {
     type: String,
     required: true
-  },
-  audience: {
-    type: String,
-    enum: ["all", "students", "staff"],
-    default: "all"
   },
   created_by: {
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true
   },
-  active: {
-    type: Boolean,
-    default: true
-  }
 }, { timestamps: true });
 
-export const Announcement = model("Announcement", announcementSchema);
+const Announcement = mongoose.model("Announcement", announcementSchema);
+
+export default Announcement;

@@ -1,3 +1,5 @@
+import mongoose, {Schema} from "mongoose";
+
 const paymentSchema = new Schema({
   user_id: {
     type: Schema.Types.ObjectId,
@@ -8,23 +10,17 @@ const paymentSchema = new Schema({
     type: Number,
     required: true
   },
-  method: {
-    type: String,
-    enum: ["cash", "upi", "card"],
-    required: true
-  },
   status: {
     type: String,
     enum: ["success", "failed"],
     required: true
   },
-  reference: {
+  transaction_id: {
     type: String
-  },
-  transaction_id:{
-    type:String,
-    required: true
   }
 }, { timestamps: true });
 
-export const Payment = model("Payment", paymentSchema);
+const Payment = mongoose.model("Payment", paymentSchema);
+
+export default Payment;
+

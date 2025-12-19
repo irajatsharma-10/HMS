@@ -1,7 +1,9 @@
-const disciplinaryCaseSchema = new Schema({
+import mongoose, { Schema } from "mongoose";
+
+const disciplinarySchema = new Schema({
   student_id: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Student",
     required: true
   },
   reason: {
@@ -24,8 +26,6 @@ const disciplinaryCaseSchema = new Schema({
   }
 }, { timestamps: true });
 
-export const DisciplinaryCase = model(
-  "DisciplinaryCase",
-  disciplinaryCaseSchema
-);
+const Disciplinary = mongoose.model("Disciplinary", disciplinarySchema);
 
+export default Disciplinary;

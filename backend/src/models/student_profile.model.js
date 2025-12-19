@@ -1,4 +1,4 @@
-import mongoose, { Schema, model } from "mongoose";
+import { Schema, model } from "mongoose";
 
 const studentSchema = new Schema(
   {
@@ -7,11 +7,12 @@ const studentSchema = new Schema(
       ref: "User",
       required: true
     },
-    student_id:{
+    sid:{
       type: String,
       unique: true,
       required: true,
-      min: [8,"Please provide valid student id"]
+      minLength: 8,
+      maxLength: 8,
     },
     permanent_address:{
       type: String,
@@ -24,11 +25,30 @@ const studentSchema = new Schema(
     },
     guardian_contact: {
       type: Number,
-      required: true
+      required: true,
+      minLength: 10,
+      maxLength: 10,
     },
     leaving_date: {
       type: Date,
       default: null
+    },
+    branch: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    room_number:{
+      type: Number,
+      required: true,
+    },
+    block:{
+      type: String,
+      required: true,
+      lowercase: true,
+    },
+    room_out:{
+      type: Date,
     }
   },
   {

@@ -1,7 +1,9 @@
+import mongoose, { Schema } from "mongoose";
+
 const leaveRequestSchema = new Schema({
   student_id: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Student",
     required: true
   },
   from_date: {
@@ -28,8 +30,9 @@ const leaveRequestSchema = new Schema({
   approved_by: {
     type: Schema.Types.ObjectId,
     ref: "User",
-    default: null
   }
 }, { timestamps: true });
 
-export const LeaveRequest = model("LeaveRequest", leaveRequestSchema);
+const LeaveRequest = mongoose.model("LeaveRequest", leaveRequestSchema);
+
+export default LeaveRequest;

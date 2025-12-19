@@ -5,7 +5,7 @@ import Announcement from "./announcement.model.js"
 import IssueComment from "./issue_comment.model.js"
 import Payment from "./payment.model.js"
 import Student from "./student_profile.model.js"
-import  DisciplinaryCase  from "./disciplinary_case.model.js"
+import DisciplinaryCase  from "./disciplinary_case.model.js"
 
 export {
     User,

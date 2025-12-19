@@ -1,40 +1,36 @@
-import mongoose, {Schema, model} from "mongoose";
+import mongoose, {Schema} from "mongoose";
 
 const issueSchema = new Schema({
     title:{
         required: true,
         type: String,
-        trim: "true",
-        lowercase: "true"
+        trim: true,
     },
     description:{
         required: true,
         type: String,
-        trim: "true",
-        lowercase: "true",
+        trim: true,
+        lowercase: true,
         min: [10, "Minimum character are required"],
         max: [100, "Word limit reached "]
     },
     category:{
         type: String,
-        default: "drinkingWater",
-        enum: ["drinkingWater", "plumbing", "furniture", "electricity", "other"]
-    },
-    priority:{
-        type: String,
-        default: "normal",
-        enum: ["emergency", "normal", "high", "low"]
+        default: "DrinkingWater",
+        enum: ["drinking-water", "plumbing", "furniture", "electricity", "other"]
     },
     status:{
         type: String,
         default: "pending",
-        enum: ["pending", "completed"],
+        enum: ["pending", "resolved"],
     },
     raised_by:{
         type: Schema.Types.ObjectId,
+        required: true,
         ref: "Student",
-
     }
 },{timestamps: true})
 
-export const issue = model("Issue", issueSchema);
+const Issue = mongoose.model("Issue", issueSchema);
+
+export default Issue;
