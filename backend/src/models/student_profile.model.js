@@ -1,23 +1,29 @@
-import mongoose, {Schema, model} from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
-const studentSchema = new Schema({
+const studentSchema = new Schema(
+  {
     user_id: {
-        type: Schema.Types.ObjectId,
-        ref: "User"
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
     },
-    gaurdian_name:{
-        type: String,
-        trim: "true"
+    guardian_name: {
+      type: String,
+      trim: true
     },
-    guardian_contact:{
-        type: Number,
-        required: true,
+    guardian_contact: {
+      type: Number,
+      required: true
     },
-    createdAt: Date.now(),
     leaving_date: {
-        type: Date,
-        Default: null
+      type: Date,
+      default: null
     }
-})
+  },
+  {
+    timestamps: true
+  }
+);
 
-const student = model("Student", studentSchema)
+const Student = model("Student", studentSchema);
+export default Student;

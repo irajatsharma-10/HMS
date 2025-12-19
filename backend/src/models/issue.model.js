@@ -37,4 +37,4 @@ const issueSchema = new Schema({
     }
 },{timestamps: true})
 
-const issue = model("Issue", issueSchema);
+export const issue = model("Issue", issueSchema);
