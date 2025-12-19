@@ -20,6 +20,10 @@ const paymentSchema = new Schema({
   },
   reference: {
     type: String
+  },
+  transaction_id:{
+    type:String,
+    required: true
   }
 }, { timestamps: true });
 

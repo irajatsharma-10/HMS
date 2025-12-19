@@ -7,6 +7,17 @@ const studentSchema = new Schema(
       ref: "User",
       required: true
     },
+    student_id:{
+      type: String,
+      unique: true,
+      required: true,
+      min: [8,"Please provide valid student id"]
+    },
+    permanent_address:{
+      type: String,
+      trim: true,
+      required: true,
+    },
     guardian_name: {
       type: String,
       trim: true

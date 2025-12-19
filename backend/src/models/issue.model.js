@@ -17,18 +17,18 @@ const issueSchema = new Schema({
     },
     category:{
         type: String,
-        default: "DrinkingWater",
-        enum: ["DrinkingWater", "Plumbing", "Furniture", "Electricity", "Other"]
+        default: "drinkingWater",
+        enum: ["drinkingWater", "plumbing", "furniture", "electricity", "other"]
     },
     priority:{
         type: String,
-        default: "Normal",
-        enum: ["Emergency", "Normal", "High", "Low"]
+        default: "normal",
+        enum: ["emergency", "normal", "high", "low"]
     },
     status:{
         type: String,
-        default: "Pending",
-        enum: ["Pending", "Completed"],
+        default: "pending",
+        enum: ["pending", "completed"],
     },
     raised_by:{
         type: Schema.Types.ObjectId,

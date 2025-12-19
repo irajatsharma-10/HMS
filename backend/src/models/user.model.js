@@ -5,16 +5,16 @@ const userSchema = new Schema(
   {
     full_name: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true },
-    phone: { type: Number, required: true },
+    phone: { type: Number, required: true, minLength: 10, maxLength: 10 },
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["Student", "Admin", "Staff"],
+      enum: ["student", "admin", "staff"],
       default: "Student"
     },
     status: {
       type: String,
-      enum: ["Active", "Inactive"],
+      enum: ["active", "inactive"],
       default: "Active"
     },
     refreshToken: { type: String, trim: true }

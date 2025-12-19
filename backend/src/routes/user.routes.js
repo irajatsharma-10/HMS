@@ -7,8 +7,8 @@ const router = Router();
 router.get("/",allData);
 router.post("/add", addData)
 router.post("/login", login);
-router.post("/student", auth, isStudent, student);
-router.post("/admin", auth, isAdmin, admin);
-router.post("/staff", auth, isStaff, staff);
+router.get("/student", auth, isStudent, student);
+router.get("/admin", auth, isAdmin, admin);
+router.get("/staff", auth, isStaff, staff);
 
 export default router;
