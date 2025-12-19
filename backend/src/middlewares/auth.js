@@ -1,4 +1,4 @@
-import User from "../models/user.model"
+import User from "../models/user.model.js"
 import jwt from "jsonwebtoken"
 
 const auth = async (req,res,next)=>{
@@ -20,7 +20,7 @@ const auth = async (req,res,next)=>{
 
 }
 
-const isStudent = async ((req,res,next)=>{
+const isStudent = async (req,res,next)=>{
     try{
         if(req.user.role !== "Student"){
             return req.json({
@@ -35,9 +35,9 @@ const isStudent = async ((req,res,next)=>{
             message: "User is not verified, Please try again later"
         })
     }
-})
+}
 
-const isStaff = async ((req,res,next)=>{
+const isStaff = async (req,res,next)=>{
     try{
         if(req.user.role !== "Staff"){
             return req.json({
@@ -52,9 +52,9 @@ const isStaff = async ((req,res,next)=>{
             message: "User is not verified, Please try again later"
         })
     }
-})
+}
 
-const isAdmin = async ((req,res,next)=>{
+const isAdmin = async (req,res,next)=>{
     try{
         if(req.user.role !== "Admin"){
             return req.json({
@@ -69,7 +69,7 @@ const isAdmin = async ((req,res,next)=>{
             message: "User is not verified, Please try again later"
         })
     }
-})
+}
 
 
 export {auth,isStudent,isAdmin,isStaff}

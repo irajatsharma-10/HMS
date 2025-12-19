@@ -1,77 +1,83 @@
-import User from "../models/user.model"
+import User from "../models/user.model.js"
 
 
 const generateAcessAndRefreshToken = async (userId) => {
-    try {
-        const user = await User.findById(userId)
-        const refreshToken = await user.refreshToken();
-        const accessToken = await user.accessToken();
+  const user = await User.findById(userId);
 
-        await User.findByIdAndUpdate(
-            userId,
-            {
-                refreshToken: refreshToken
-            },
-            { new: true }
-        )
-        return { refreshToken, accessToken };
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Error while generating refreshToken and accessToken"
-        })
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  return { accessToken, refreshToken };
+};
+
+const login = async (req, res) => {
+  try {
+    const {email, password} = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all the necessary details"
+      });
     }
-}
 
+    console.log("LOGIN CALLED",email);
 
-exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body
-        if (!email || !password) return res.json({
-            success: false,
-            message: "Please provide all the necessory details"
-        })
-        const user = await User.findOne({email});
-        if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide the valid user"
-            })
-        }
-        const checkPasswordValid = await user.checkPasswordValid(password)
-        if (!checkPasswordValid) {
-            return res.status(404).json({
-                success: false,
-                message: "Invalid User credentials"
-            })
-        }
-        const { refreshToken, accessToken } = await generateAcessAndRefreshToken(user._id)
-
-        const sanitizedUser = await User.findById(user._id).select("-refreshToken -password")
-
-        return res.cookie("accessToken", accessToken, {
-            httpOnly: true,
-            secure: true
-        }).cookie("refreshToken",refreshToken,{
-            httpOnly: true,
-            secure: true
-        }).json({
-            success: true,
-            user: sanitizedUser,
-            message: "User loggedIn successfully"
-        })
-
-
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "No valid user found"
-        })
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password"
+      });
     }
-}
+
+    const checkPasswordValid = await user.passwordCorrect(password);
+    console.log(checkPasswordValid)
+    if (!checkPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
+
+    
+
+    const { refreshToken, accessToken } =
+      await generateAcessAndRefreshToken(user._id);
+
+    const sanitizedUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+
+    return res
+      .cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: false  
+      })
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: false
+      })
+      .json({
+        success: true,
+        user: sanitizedUser,
+        message: "User logged in successfully"
+      });
+
+  } catch (error) {
+    console.error("LOGIN ERROR 👉", error);
+    return res.status(500).json({
+      success: false,
+      message: "No valid user found"
+    });
+  }
+};
 
 
-exports.Student = async(_req,res)=>{
+const student = async(_req,res)=>{
     try{
         return res.json({
             success: true,
@@ -85,7 +91,7 @@ exports.Student = async(_req,res)=>{
     }
 }
 
-exports.staff = async (_req, res) => {
+const staff = async (_req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -99,7 +105,7 @@ exports.staff = async (_req, res) => {
   }
 };
 
-exports.admin = async (_req, res) => {
+const admin = async (_req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -112,3 +118,6 @@ exports.admin = async (_req, res) => {
     });
   }
 };
+
+
+export {login, staff, admin, student, generateAcessAndRefreshToken}
