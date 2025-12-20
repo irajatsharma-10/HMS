@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import logger from "../utils/logger.js";
+
 
 const login = async (req, res) => {
   try {
@@ -44,15 +44,15 @@ const login = async (req, res) => {
 
     // Generate token
     const accessToken = user.generateAccessToken();
-    
-    // Sanitize user object
-    const sanitizedUser = user.toObject();
-    delete sanitizedUser.password;
+    const sanitizedUser = user
+    sanitizedUser.password = undefined;
+
+
 
     return res
       .cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: false,
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24)
       })
       .status(200)
@@ -63,7 +63,7 @@ const login = async (req, res) => {
       });
 
   } catch (error) {
-    logger.error("Login failed", error);
+    console.error("LOGIN ERROR 👉", error);
     return res.status(500).json({
       success: false,
       message: "Login failed"
@@ -76,6 +76,8 @@ const logout = async (req, res) => {
     return res
       .clearCookie("accessToken", {
         httpOnly: true,
+        secure: true,
+        sameSite: "strict"
       })
       .status(200)
       .json({
@@ -83,7 +85,7 @@ const logout = async (req, res) => {
         message: "User logged out successfully"
       });
   } catch (error) {
-    logger.error("Logout failed", error);
+    console.error("Logout failed", error);
     return res.status(500).json({
       success: false,
       message: "Logout failed"
@@ -170,15 +172,8 @@ const addUser = async (req, res) => {
     });
 
   } catch (error) {
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyPattern)[0];
-      return res.status(409).json({
-        success: false,
-        message: `User with this ${field} already exists`
-      });
-    }
     
-    logger.error("Failed to add user", error);
+    console.error("Failed to add user", error);
     return res.status(500).json({
       success: false,
       message: "Failed to add user"
@@ -203,7 +198,7 @@ const getCurrentUser = async (req, res) => {
       message: "User fetched successfully"
     });
   } catch (error) {
-    logger.error("Failed to fetch user", error);
+    console.error("Failed to fetch user", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch user"

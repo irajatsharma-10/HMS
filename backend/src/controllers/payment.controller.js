@@ -1,7 +1,7 @@
 import Payment from "../models/payment.model.js";
 import User from "../models/user.model.js";
 import Student from "../models/student_profile.model.js";
-import logger from "../utils/logger.js";
+
 
 // Create payment record
 const createPayment = async (req, res) => {
@@ -64,7 +64,7 @@ const createPayment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("CREATE PAYMENT", error);
+    console.error("CREATE PAYMENT", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create payment record"
@@ -133,7 +133,7 @@ const getAllPayments = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ALL PAYMENTS", error);
+    console.error("GET ALL PAYMENTS", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch payments"
@@ -171,7 +171,7 @@ const getPayment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET PAYMENT", error);
+    console.error("GET PAYMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -234,7 +234,7 @@ const getPaymentStats = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET PAYMENT STATS", error);
+    console.error("GET PAYMENT STATS", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch payment statistics"
@@ -292,7 +292,7 @@ const updatePayment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE PAYMENT", error);
+    console.error("UPDATE PAYMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -328,7 +328,7 @@ const deletePayment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("DELETE PAYMENT", error);
+    console.error("DELETE PAYMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({

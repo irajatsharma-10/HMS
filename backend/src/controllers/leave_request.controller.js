@@ -1,14 +1,16 @@
 import LeaveRequest from "../models/leave_request.model.js";
 import Student from "../models/student_profile.model.js";
 import User from "../models/user.model.js";
-import logger from "../utils/logger.js";
+
 
 // Create leave request (student only)
 const createLeaveRequest = async (req, res) => {
   try {
+    const user_id = req.user._id; 
+    console.log("user_id",user_id)
     const { from_date, to_date, destination, reason } = req.body;
 
-    // Validation
+    /* -------------------- Basic Validation -------------------- */
     if (!from_date || !to_date) {
       return res.status(400).json({
         success: false,
@@ -16,13 +18,27 @@ const createLeaveRequest = async (req, res) => {
       });
     }
 
-    const fromDate = new Date(from_date);
-    const toDate = new Date(to_date);
+    if (!destination?.trim() || !reason?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Destination and reason are required"
+      });
+    }
+
+    /* -------------------- Date Helpers -------------------- */
+    const normalizeDate = (dateStr) => {
+      const [year, month, day] = dateStr.split("-").map(Number)
+      return new Date(year,month-1,day)
+    };
+
+    const fromDate = normalizeDate(from_date);
+    const toDate = normalizeDate(to_date);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Validate dates
-    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+    /* -------------------- Date Validation -------------------- */
+    if (!fromDate || !toDate) {
       return res.status(400).json({
         success: false,
         message: "Invalid date format"
@@ -31,6 +47,7 @@ const createLeaveRequest = async (req, res) => {
 
     if (fromDate < today) {
       return res.status(400).json({
+        user_id,
         success: false,
         message: "From date cannot be in the past"
       });
@@ -39,30 +56,43 @@ const createLeaveRequest = async (req, res) => {
     if (toDate < fromDate) {
       return res.status(400).json({
         success: false,
-        message: "To date must be after from date"
+        message: "To date must be same as or after from date"
       });
     }
 
-    // Check if student profile exists (optimized - single DB call)
-    const student = await Student.findOne({ user_id: req.user._id });
+    /* -------------------- Optional Rules -------------------- */
 
+    // // Max leave duration (e.g., 30 days)
+    // const MAX_LEAVE_DAYS = 30;
+    // const leaveDays =
+    //   (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24) + 1;
+
+    // if (leaveDays > MAX_LEAVE_DAYS) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: `Leave duration cannot exceed ${MAX_LEAVE_DAYS} days`
+    //   });
+    // }
+
+
+
+    /* -------------------- Student Check -------------------- */
+    const student = await Student.findOne({user_id});
+    console.log(student)
     if (!student) {
       return res.status(404).json({
+        student,
         success: false,
         message: "Student profile not found. Please create your profile first"
       });
     }
 
-    // Check for overlapping leave requests
+    /* -------------------- Overlap Check -------------------- */
     const overlappingLeave = await LeaveRequest.findOne({
       student_id: student._id,
       status: { $in: ["pending", "approved"] },
-      $or: [
-        {
-          from_date: { $lte: toDate },
-          to_date: { $gte: fromDate }
-        }
-      ]
+      from_date: { $lte: toDate },
+      to_date: { $gte: fromDate }
     });
 
     if (overlappingLeave) {
@@ -72,16 +102,17 @@ const createLeaveRequest = async (req, res) => {
       });
     }
 
-    // Create leave request
+    /* -------------------- Create Leave -------------------- */
     const leaveRequest = await LeaveRequest.create({
       student_id: student._id,
       from_date: fromDate,
       to_date: toDate,
-      destination: destination?.trim(),
-      reason: reason?.trim()
+      destination: destination.trim(),
+      reason: reason.trim(),
+      status: "pending"
     });
 
-    // Populate student and user details (optimized - nested populate)
+    /* -------------------- Populate Response -------------------- */
     await leaveRequest.populate({
       path: "student_id",
       select: "sid branch room_number block",
@@ -93,12 +124,12 @@ const createLeaveRequest = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      leaveRequest,
-      message: "Leave request created successfully"
+      message: "Leave request created successfully",
+      leaveRequest
     });
 
   } catch (error) {
-    logger.error("CREATE LEAVE REQUEST", error);
+    console.error("CREATE LEAVE REQUEST ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create leave request"
@@ -167,7 +198,7 @@ const getAllLeaveRequests = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ALL LEAVE REQUESTS", error);
+    console.error("GET ALL LEAVE REQUESTS", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch leave requests"
@@ -216,7 +247,7 @@ const getLeaveRequest = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET LEAVE REQUEST", error);
+    console.error("GET LEAVE REQUEST", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -286,7 +317,7 @@ const updateLeaveRequestStatus = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE LEAVE REQUEST STATUS", error);
+    console.error("UPDATE LEAVE REQUEST STATUS", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -343,7 +374,7 @@ const deleteLeaveRequest = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("DELETE LEAVE REQUEST", error);
+    console.error("DELETE LEAVE REQUEST", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({

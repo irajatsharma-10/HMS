@@ -1,6 +1,6 @@
 import Issue from "../models/issue.model.js";
 import Student from "../models/student_profile.model.js";
-import logger from "../utils/logger.js";
+
 
 // Create issue (student only)
 const createIssue = async (req, res) => {
@@ -80,7 +80,7 @@ const createIssue = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("CREATE ISSUE", error);
+    console.error("CREATE ISSUE", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create issue"
@@ -153,7 +153,7 @@ const getAllIssues = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ALL ISSUES", error);
+    console.error("GET ALL ISSUES", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch issues"
@@ -201,7 +201,7 @@ const getIssue = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ISSUE", error);
+    console.error("GET ISSUE", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -261,7 +261,7 @@ const updateIssueStatus = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE ISSUE STATUS", error);
+    console.error("UPDATE ISSUE STATUS", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -366,7 +366,7 @@ const updateIssue = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE ISSUE", error);
+    console.error("UPDATE ISSUE", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -423,7 +423,7 @@ const deleteIssue = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("DELETE ISSUE", error);
+    console.error("DELETE ISSUE", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({

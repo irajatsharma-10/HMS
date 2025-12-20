@@ -1,6 +1,6 @@
 import DisciplinaryCase from "../models/disciplinary_case.model.js";
 import Student from "../models/student_profile.model.js";
-import logger from "../utils/logger.js";
+
 
 // Create disciplinary case (admin/staff only)
 const createDisciplinaryCase = async (req, res) => {
@@ -64,7 +64,7 @@ const createDisciplinaryCase = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("CREATE DISCIPLINARY CASE", error);
+    console.error("CREATE DISCIPLINARY CASE", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -153,7 +153,7 @@ const getAllDisciplinaryCases = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ALL DISCIPLINARY CASES", error);
+    console.error("GET ALL DISCIPLINARY CASES", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch disciplinary cases"
@@ -202,7 +202,7 @@ const getDisciplinaryCase = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET DISCIPLINARY CASE", error);
+    console.error("GET DISCIPLINARY CASE", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -284,7 +284,7 @@ const updateDisciplinaryCase = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE DISCIPLINARY CASE", error);
+    console.error("UPDATE DISCIPLINARY CASE", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -320,7 +320,7 @@ const deleteDisciplinaryCase = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("DELETE DISCIPLINARY CASE", error);
+    console.error("DELETE DISCIPLINARY CASE", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({

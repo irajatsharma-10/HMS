@@ -1,6 +1,6 @@
 import Student from "../models/student_profile.model.js";
 import User from "../models/user.model.js";
-import logger from "../utils/logger.js";
+
 
 // Create student profile
 const createStudentProfile = async (req, res) => {
@@ -15,7 +15,6 @@ const createStudentProfile = async (req, res) => {
       block
     } = req.body;
 
-
     // Validation
     if (!sid || !permanent_address || !guardian_contact || !branch || !room_number || !block) {
       return res.status(400).json({
@@ -25,7 +24,7 @@ const createStudentProfile = async (req, res) => {
     }
 
     // Validate SID format
-    if (sid.length !== 8 || !/^\d+$/.test(sid)) {
+    if (sid.length !== 8) {
       return res.status(400).json({
         success: false,
         message: "Student ID must be exactly 8 digits"
@@ -33,7 +32,7 @@ const createStudentProfile = async (req, res) => {
     }
 
     // Validate guardian contact
-    if (guardian_contact.toString().length !== 10 || !/^\d+$/.test(guardian_contact.toString())) {
+    if (guardian_contact.toString().length !== 10) {
       return res.status(400).json({
         success: false,
         message: "Guardian contact must be 10 digits"
@@ -41,6 +40,8 @@ const createStudentProfile = async (req, res) => {
     }
 
     const user_id = req.user._id;
+
+
     // Check if user exists and is a student (optimized - single DB call with role check)
     const user = await User.findById(user_id);
     if (!user) {
@@ -50,17 +51,15 @@ const createStudentProfile = async (req, res) => {
       });
     }
 
-    if (user.role !== "student") {
+    if (user.role !== "admin") {
       return res.status(400).json({
         success: false,
-        message: "User must have student role"
+        message: "User must have admin role"
       });
     }
 
     // Check if student profile already exists
-    const existingProfile = await Student.findOne({
-      $or: [{ user_id }, { sid }]
-    });
+    const existingProfile = await Student.findOne({ sid });
 
     if (existingProfile) {
       return res.status(409).json({
@@ -71,38 +70,35 @@ const createStudentProfile = async (req, res) => {
       });
     }
 
-    // Create student profile
-    const student = await Student.create({
-      user_id,
-      sid,
-      permanent_address: permanent_address.trim(),
-      guardian_name: guardian_name?.trim(),
-      guardian_contact,
-      branch: branch.trim(),
-      room_number,
-      block: block.toLowerCase().trim()
-    });
+    // const studentUser = await User.create({
+    //   full_name,
+    //   email,
+    //   phone,
+    //   password: hashedPassword,
+    //   role: "student"
+    // });
 
-    // Populate user details in response (optimized - single populate call)
-    await student.populate("user_id", "full_name email phone role");
+    // const newStudentProfile = await Student.create({
+    //   user_id: studentUser._id,
+    //   sid,
+    //   permanent_address: permanent_address.trim(),
+    //   guardian_name: guardian_name?.trim(),
+    //   guardian_contact,
+    //   branch: branch.trim(),
+    //   room_number,
+    //   block: block.toLowerCase().trim()
+    // });
+
+    await newStudentProfile.populate("user_id", "full_name email phone role");
 
     return res.status(201).json({
       success: true,
-      student,
+      newStudentProfile,
       message: "Student profile created successfully"
     });
 
   } catch (error) {
-    logger.error("CREATE STUDENT PROFILE", error);
-    
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyPattern)[0];
-      return res.status(409).json({
-        success: false,
-        message: `Student with this ${field} already exists`
-      });
-    }
-
+    console.error("CREATE STUDENT PROFILE", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create student profile"
@@ -113,20 +109,10 @@ const createStudentProfile = async (req, res) => {
 // Get student profile by user ID
 const getStudentProfile = async (req, res) => {
   try {
-    const user_id = req.user._id
+    const user_id = req.user._id;
 
-    // If user_id is "me", use authenticated user's ID
-    const targetUserId = user_id === "me" ? req.user._id : user_id;
-
-    // Check if requesting own profile or admin/staff
-    if (user_id !== "me" && req.user.role !== "admin" && req.user.role !== "staff") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied"
-      });
-    }
-
-    const student = await Student.findOne({ user_id: targetUserId })
+   // authenticate with role base
+    const student = await Student.findOne({ user_id })
       .populate("user_id", "full_name email phone role status");
 
     if (!student) {
@@ -143,7 +129,7 @@ const getStudentProfile = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET STUDENT PROFILE", error);
+    console.error("GET STUDENT PROFILE", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch student profile"
@@ -152,6 +138,7 @@ const getStudentProfile = async (req, res) => {
 };
 
 // Get all students (admin/staff only)
+// to be updated later
 const getAllStudents = async (req, res) => {
   try {
     const { page = 1, limit = 10, block, branch, search } = req.query;
@@ -206,7 +193,7 @@ const getAllStudents = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ALL STUDENTS", error);
+    console.error("GET ALL STUDENTS", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch students"
@@ -217,7 +204,7 @@ const getAllStudents = async (req, res) => {
 // Update student profile
 const updateStudentProfile = async (req, res) => {
   try {
-    const user_id = req.user._id
+    const user_id = req.user._id;
     const {
       permanent_address,
       guardian_name,
@@ -227,17 +214,16 @@ const updateStudentProfile = async (req, res) => {
       block
     } = req.body;
 
-    // Check if user is updating own profile or admin/staff
-    const targetUserId = user_id === "me" ? req.user._id : user_id;
+
     
-    if (user_id !== "me" && req.user.role !== "admin" && req.user.role !== "staff") {
+    if (req.user.role !== "admin" && req.user.role !== "staff") {
       return res.status(403).json({
         success: false,
         message: "Access denied"
       });
     }
 
-    const student = await Student.findOne({ user_id: targetUserId });
+    const student = await Student.findOne({ user_id });
 
     if (!student) {
       return res.status(404).json({
@@ -247,7 +233,7 @@ const updateStudentProfile = async (req, res) => {
     }
 
     // Validate guardian contact if provided
-    if (guardian_contact && (guardian_contact.toString().length !== 10 || !/^\d+$/.test(guardian_contact.toString()))) {
+    if (guardian_contact && (guardian_contact?.toString()?.length !== 10 )) {
       return res.status(400).json({
         success: false,
         message: "Guardian contact must be 10 digits"
@@ -272,7 +258,7 @@ const updateStudentProfile = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE STUDENT PROFILE", error);
+    console.error("UPDATE STUDENT PROFILE", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update student profile"
@@ -283,7 +269,7 @@ const updateStudentProfile = async (req, res) => {
 // Delete student profile (admin only)
 const deleteStudentProfile = async (req, res) => {
   try {
-    const user_id = req.user._id
+    const user_id = req.user._id;
 
     const student = await Student.findOneAndDelete({ user_id });
 
@@ -300,7 +286,7 @@ const deleteStudentProfile = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("DELETE STUDENT PROFILE", error);
+    console.error("DELETE STUDENT PROFILE", error);
     return res.status(500).json({
       success: false,
       message: "Failed to delete student profile"

@@ -1,7 +1,7 @@
 import IssueComment from "../models/issue_comment.model.js";
 import Issue from "../models/issue.model.js";
 import Student from "../models/student_profile.model.js";
-import logger from "../utils/logger.js";
+
 
 // Create comment on issue
 const createComment = async (req, res) => {
@@ -56,7 +56,7 @@ const createComment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("CREATE COMMENT", error);
+    console.error("CREATE COMMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -121,7 +121,7 @@ const getIssueComments = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ISSUE COMMENTS", error);
+    console.error("GET ISSUE COMMENTS", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -172,7 +172,7 @@ const getComment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET COMMENT", error);
+    console.error("GET COMMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -245,7 +245,7 @@ const updateComment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE COMMENT", error);
+    console.error("UPDATE COMMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -292,7 +292,7 @@ const deleteComment = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("DELETE COMMENT", error);
+    console.error("DELETE COMMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({

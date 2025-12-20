@@ -28,3 +28,5 @@ router.delete("/:id", auth, authorizeRoles("admin"), deleteDisciplinaryCase);
 
 export default router;
 
+
+

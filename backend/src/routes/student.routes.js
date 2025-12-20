@@ -12,16 +12,16 @@ import {
 const router = Router();
 
 // Create student profile (student only)
-router.post("/", auth, authorizeRoles("student"), createStudentProfile);
+router.post("/create-student", auth, authorizeRoles("admin","staff"), createStudentProfile);
 
 // Get all students (admin/staff only) - must come before /:user_id
-router.get("/", auth, authorizeRoles("admin", "staff"), getAllStudents);
+router.get("/getall-students", auth, authorizeRoles("admin", "staff"), getAllStudents);
 
-// Get own profile (student) - specific route to avoid conflicts
-router.get("/me", auth, (req, res) => {
-  req.params.user_id = "me";
-  return getStudentProfile(req, res);
-});
+// // Get own profile (student) - specific route to avoid conflicts
+// router.get("/current-user", auth, (req, res) => {
+//   req.params.user_id = "me";
+//   return getStudentProfile(req, res);
+// });
 
 // Get specific profile by user_id (admin/staff) or own profile
 router.get("/:user_id", auth, getStudentProfile);

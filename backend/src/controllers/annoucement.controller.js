@@ -1,5 +1,5 @@
 import Announcement from "../models/announcement.model.js";
-import logger from "../utils/logger.js";
+
 
 // Create announcement (admin/staff only)
 const createAnnouncement = async (req, res) => {
@@ -45,7 +45,7 @@ const createAnnouncement = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("CREATE ANNOUNCEMENT", error);
+    console.error("CREATE ANNOUNCEMENT", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create announcement"
@@ -90,7 +90,7 @@ const getAllAnnouncements = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ALL ANNOUNCEMENTS", error);
+    console.error("GET ALL ANNOUNCEMENTS", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch announcements"
@@ -120,7 +120,7 @@ const getAnnouncement = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("GET ANNOUNCEMENT", error);
+    console.error("GET ANNOUNCEMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -195,7 +195,7 @@ const updateAnnouncement = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("UPDATE ANNOUNCEMENT", error);
+    console.error("UPDATE ANNOUNCEMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -242,7 +242,7 @@ const deleteAnnouncement = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error("DELETE ANNOUNCEMENT", error);
+    console.error("DELETE ANNOUNCEMENT", error);
     
     if (error.name === "CastError") {
       return res.status(400).json({

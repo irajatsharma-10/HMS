@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 // Create comment on issue
-router.post("/", auth, createComment);
+router.post("/createComment", auth, createComment);
 
 // Get all comments for an issue
 router.get("/issue/:issue_id", auth, getIssueComments);
@@ -26,4 +26,6 @@ router.patch("/:id", auth, updateComment);
 router.delete("/:id", auth, deleteComment);
 
 export default router;
+
+
 
