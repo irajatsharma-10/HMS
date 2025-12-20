@@ -33,7 +33,8 @@ app.use(cookieParser());
 /* -------------------- AUTH -------------------- */
 app.post("/api/v1/login",login);
 app.post("/api/v1/logout", logout)
-
+app.get("/api/v1/home", auth, getAllAnnouncements);
+app.use("/api/v1/home/announcements", announcementRoutes);
 /* -------------------- ROUTES -------------------- */
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/students", studentRoutes);

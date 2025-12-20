@@ -13,7 +13,7 @@ import {
 const router = Router();
 
 // Create issue (student only)
-router.post("/", auth, authorizeRoles("student"), createIssue);
+router.post("/create", auth, createIssue);
 
 // Get all issues
 router.get("/", auth, getAllIssues);
@@ -31,6 +31,3 @@ router.patch("/:id", auth, updateIssue);
 router.delete("/:id", auth, deleteIssue);
 
 export default router;
-
-
-
