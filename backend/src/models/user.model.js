@@ -9,7 +9,7 @@ const userSchema = new Schema(
 
     phone: { type: String, required: true, minLength: 10, maxLength: 10 },
 
-    password: { type: String, required: true },
+    password: { type: String, required: true, select: false },
 
     role: {
       type: String,
@@ -26,11 +26,10 @@ const userSchema = new Schema(
 );
 
 userSchema.methods.generateAccessToken = function () {
-  const user=this;
   return jwt.sign(
-    { _id: user._id, role: user.role },
-    process.env.JWT_SECRET_KEY,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    { _id: this._id, role: this.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "24h" }
   );
 };
 

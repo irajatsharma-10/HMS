@@ -15,18 +15,15 @@ const Login = () => {
   const handleSubmit = async (e) => {
     try {
       e.preventDefault();
-      const res = await axios.post(BASE_URL + "/login", { email, password }, { withCredentials: true })
-      console.log(res)
-      // navigate(`/${role}`)
-
-      console.log({
-        email,
-        password,
-
-      });
+      const res = await axios.post(BASE_URL + "/login", { email, password }, { withCredentials: true });
+      
+      if (res.data.success) {
+        const role = res.data.user.role;
+        window.location.href = `/${role}`;
+      }
     } catch (err) {
-      setError(err?.response?.data || "Something went wrong ");
-      console.error(err);
+      const errorMessage = err?.response?.data?.message || err?.response?.data || "Something went wrong";
+      setError(errorMessage);
     }
   };
 

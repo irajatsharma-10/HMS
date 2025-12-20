@@ -1,7 +1,6 @@
 import { Bell, Calendar, Trophy, Wrench, Megaphone, Users, BookOpen } from 'lucide-react';
 
 const Home = () => {
-  console.log("home called")
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-100 py-8">
       <div className="container mx-auto px-4">
