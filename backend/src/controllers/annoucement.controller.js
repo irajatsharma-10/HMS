@@ -1,11 +1,9 @@
 import Announcement from "../models/announcement.model.js";
 
-
 // Create announcement (admin/staff only)
 const createAnnouncement = async (req, res) => {
   try {
     const { title, message, notice_url } = req.body;
-
     // Validation
     if (!title || !message) {
       return res.status(400).json({
@@ -13,21 +11,6 @@ const createAnnouncement = async (req, res) => {
         message: "Title and message are required"
       });
     }
-
-    if (title.trim().length < 3) {
-      return res.status(400).json({
-        success: false,
-        message: "Title must be at least 3 characters long"
-      });
-    }
-
-    if (message.trim().length < 10) {
-      return res.status(400).json({
-        success: false,
-        message: "Message must be at least 10 characters long"
-      });
-    }
-
     const announcement = await Announcement.create({
       title: title.trim(),
       message: message.trim(),
@@ -121,7 +104,7 @@ const getAnnouncement = async (req, res) => {
 
   } catch (error) {
     console.error("GET ANNOUNCEMENT", error);
-    
+
     if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
@@ -152,32 +135,13 @@ const updateAnnouncement = async (req, res) => {
     }
 
     // Check if user is creator or admin/staff
-    if (announcement.created_by.toString() !== req.user._id.toString() && 
-        req.user.role !== "admin" && req.user.role !== "staff") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. You can only update your own announcements"
-      });
-    }
 
     // Update fields
     if (title) {
-      if (title.trim().length < 3) {
-        return res.status(400).json({
-          success: false,
-          message: "Title must be at least 3 characters long"
-        });
-      }
       announcement.title = title.trim();
     }
 
     if (message) {
-      if (message.trim().length < 10) {
-        return res.status(400).json({
-          success: false,
-          message: "Message must be at least 10 characters long"
-        });
-      }
       announcement.message = message.trim();
     }
 
@@ -196,14 +160,6 @@ const updateAnnouncement = async (req, res) => {
 
   } catch (error) {
     console.error("UPDATE ANNOUNCEMENT", error);
-    
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid announcement ID"
-      });
-    }
-
     return res.status(500).json({
       success: false,
       message: "Failed to update announcement"
@@ -226,14 +182,6 @@ const deleteAnnouncement = async (req, res) => {
     }
 
     // Check if user is creator or admin/staff
-    if (announcement.created_by.toString() !== req.user._id.toString() && 
-        req.user.role !== "admin" && req.user.role !== "staff") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. You can only delete your own announcements"
-      });
-    }
-
     await Announcement.findByIdAndDelete(id);
 
     return res.status(200).json({
@@ -243,14 +191,6 @@ const deleteAnnouncement = async (req, res) => {
 
   } catch (error) {
     console.error("DELETE ANNOUNCEMENT", error);
-    
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid announcement ID"
-      });
-    }
-
     return res.status(500).json({
       success: false,
       message: "Failed to delete announcement"
@@ -265,4 +205,3 @@ export {
   updateAnnouncement,
   deleteAnnouncement
 };
-

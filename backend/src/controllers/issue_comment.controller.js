@@ -1,163 +1,191 @@
-import IssueComment from "../models/issue_comment.model.js";
 import Issue from "../models/issue.model.js";
 import Student from "../models/student_profile.model.js";
 
-
-// Create comment on issue
-const createComment = async (req, res) => {
+// Create issue (student only)
+const createIssue = async (req, res) => {
   try {
-    const { issue_id, comment_text } = req.body;
-
+    const { title, description, category } = req.body;
+    const userId = req.user._id;
     // Validation
-    if (!issue_id || !comment_text) {
+    if (!title || !description) {
       return res.status(400).json({
         success: false,
-        message: "Issue ID and comment text are required"
+        message: "Title and description are required"
       });
     }
 
-    if (comment_text.trim().length < 1) {
+    if (title.trim().length < 3) {
       return res.status(400).json({
         success: false,
-        message: "Comment text cannot be empty"
+        message: "Title must be at least 3 characters long"
       });
     }
 
-    if (comment_text.trim().length > 500) {
+    if (description.trim().length < 10) {
       return res.status(400).json({
         success: false,
-        message: "Comment must not exceed 500 characters"
+        message: "Description must be at least 10 characters long"
       });
     }
 
-    // Check if issue exists (optimized - single DB call)
-    const issue = await Issue.findById(issue_id);
-    if (!issue) {
-      return res.status(404).json({
+    if (description.trim().length > 500) {
+      return res.status(400).json({
         success: false,
-        message: "Issue not found"
+        message: "Description must not exceed 500 characters"
       });
     }
 
-    // Create comment
-    const comment = await IssueComment.create({
-      issue_id,
-      comment_text: comment_text.trim(),
-      commented_by: req.user._id
+    // Validate category
+    const validCategories = ["drinking-water", "plumbing", "furniture", "electricity", "other"];
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: `Category must be one of: ${validCategories.join(", ")}`
+      });
+    }
+
+    // // Check if student profile exists (optimized - single DB call)
+    // const student = await Student.findOne({ user_id: req.user._id });
+
+    // if (!student) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: "Student profile not found. Please create your profile first"
+    //   });
+    // }
+
+    // Create issue
+    const issue = await Issue.create({
+      title: title.trim(),
+      description: description.trim(),
+      category: category || "other",
+      raised_by: userId
     });
 
-    // Populate user details (optimized - single populate call)
-    await comment.populate("commented_by", "full_name email role");
+    // Populate student details (optimized - single populate call)
+    await issue.populate({
+      path: "raised_by",
+      select: "sid branch room_number block",
+      populate: {
+        path: "user_id",
+        select: "full_name email phone"
+      }
+    });
 
     return res.status(201).json({
       success: true,
-      comment,
-      message: "Comment created successfully"
+      issue,
+      message: "Issue created successfully"
     });
 
   } catch (error) {
-    console.error("CREATE COMMENT", error);
-    
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid issue ID"
-      });
-    }
-
+    console.error("CREATE ISSUE", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to create comment"
+      message: "Failed to create issue"
     });
   }
 };
 
-// Get all comments for an issue
-const getIssueComments = async (req, res) => {
+// Get all issues
+const getAllIssues = async (req, res) => {
   try {
-    const { issue_id } = req.params;
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 10, status, category, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Check if issue exists
-    const issue = await Issue.findById(issue_id);
-    if (!issue) {
-      return res.status(404).json({
-        success: false,
-        message: "Issue not found"
-      });
-    }
+    // Build query
+    const query = {};
 
-    // Check access: students can only see comments on their own issues
+    // Students can only see their own issues
     if (req.user.role === "student") {
       const student = await Student.findOne({ user_id: req.user._id });
-      if (!student || issue.raised_by.toString() !== student._id.toString()) {
-        return res.status(403).json({
+      if (!student) {
+        return res.status(404).json({
           success: false,
-          message: "Access denied"
+          message: "Student profile not found"
         });
       }
+      query.raised_by = student._id;
     }
 
-    // Optimized: Get comments with populated user data in single query
-    const comments = await IssueComment.find({ issue_id })
-      .populate("commented_by", "full_name email role")
-      .sort({ createdAt: 1 })
+    if (status && ["pending", "resolved"].includes(status)) {
+      query.status = status;
+    }
+
+    if (category && ["drinking-water", "plumbing", "furniture", "electricity", "other"].includes(category)) {
+      query.category = category;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: new RegExp(search, "i") },
+        { description: new RegExp(search, "i") }
+      ];
+    }
+
+    // Optimized: Get issues with populated student data in single query
+    const issues = await Issue.find(query)
+      .populate({
+        path: "raised_by",
+        select: "sid branch room_number block",
+        populate: {
+          path: "user_id",
+          select: "full_name email phone"
+        }
+      })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
-    const total = await IssueComment.countDocuments({ issue_id });
+    const total = await Issue.countDocuments(query);
 
     return res.status(200).json({
       success: true,
-      comments,
+      issues,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
         total,
         pages: Math.ceil(total / parseInt(limit))
       },
-      message: "Comments fetched successfully"
+      message: "Issues fetched successfully"
     });
 
   } catch (error) {
-    console.error("GET ISSUE COMMENTS", error);
-    
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid issue ID"
-      });
-    }
-
+    console.error("GET ALL ISSUES", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch comments"
+      message: "Failed to fetch issues"
     });
   }
 };
 
-// Get single comment
-const getComment = async (req, res) => {
+// Get single issue
+const getIssue = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const comment = await IssueComment.findById(id)
-      .populate("commented_by", "full_name email role")
-      .populate("issue_id", "title status");
+    const issue = await Issue.findById(id)
+      .populate({
+        path: "raised_by",
+        select: "sid branch room_number block",
+        populate: {
+          path: "user_id",
+          select: "full_name email phone"
+        }
+      });
 
-    if (!comment) {
+    if (!issue) {
       return res.status(404).json({
         success: false,
-        message: "Comment not found"
+        message: "Issue not found"
       });
     }
 
-    // Check access: students can only see comments on their own issues
+    // Check access: students can only see their own issues
     if (req.user.role === "student") {
-      const issue = await Issue.findById(comment.issue_id._id);
       const student = await Student.findOne({ user_id: req.user._id });
-      if (!student || issue.raised_by.toString() !== student._id.toString()) {
+      if (!student || issue.raised_by._id.toString() !== student._id.toString()) {
         return res.status(403).json({
           success: false,
           message: "Access denied"
@@ -167,152 +195,245 @@ const getComment = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      comment,
-      message: "Comment fetched successfully"
+      issue,
+      message: "Issue fetched successfully"
     });
 
   } catch (error) {
-    console.error("GET COMMENT", error);
-    
+    console.error("GET ISSUE", error);
+
     if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
-        message: "Invalid comment ID"
+        message: "Invalid issue ID"
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch comment"
+      message: "Failed to fetch issue"
     });
   }
 };
 
-// Update comment (only by creator or admin/staff)
-const updateComment = async (req, res) => {
+// Update issue status (admin/staff only)
+const updateIssueStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { comment_text } = req.body;
+    const { status } = req.body;
 
-    if (!comment_text) {
+    // Validation
+    if (!status || !["pending", "resolved"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Comment text is required"
+        message: "Status must be either 'pending' or 'resolved'"
       });
     }
 
-    if (comment_text.trim().length < 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Comment text cannot be empty"
-      });
-    }
+    const issue = await Issue.findById(id);
 
-    if (comment_text.trim().length > 500) {
-      return res.status(400).json({
-        success: false,
-        message: "Comment must not exceed 500 characters"
-      });
-    }
-
-    const comment = await IssueComment.findById(id);
-
-    if (!comment) {
+    if (!issue) {
       return res.status(404).json({
         success: false,
-        message: "Comment not found"
+        message: "Issue not found"
       });
     }
 
-    // Check access: only creator or admin/staff can update
-    if (comment.commented_by.toString() !== req.user._id.toString() && 
-        req.user.role !== "admin" && req.user.role !== "staff") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. You can only update your own comments"
-      });
-    }
+    // Update status
+    issue.status = status;
+    await issue.save();
 
-    // Update comment
-    comment.comment_text = comment_text.trim();
-    await comment.save();
-    await comment.populate("commented_by", "full_name email role");
+    // Populate data for response
+    await issue.populate({
+      path: "raised_by",
+      select: "sid branch room_number block",
+      populate: {
+        path: "user_id",
+        select: "full_name email phone"
+      }
+    });
 
     return res.status(200).json({
       success: true,
-      comment,
-      message: "Comment updated successfully"
+      issue,
+      message: `Issue ${status} successfully`
     });
 
   } catch (error) {
-    console.error("UPDATE COMMENT", error);
-    
+    console.error("UPDATE ISSUE STATUS", error);
+
     if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
-        message: "Invalid comment ID"
+        message: "Invalid issue ID"
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: "Failed to update comment"
+      message: "Failed to update issue status"
     });
   }
 };
 
-// Delete comment (only by creator or admin/staff)
-const deleteComment = async (req, res) => {
+// Update issue (student can update own pending issues)
+const updateIssue = async (req, res) => {
   try {
     const { id } = req.params;
+    const { title, description, category } = req.body;
 
-    const comment = await IssueComment.findById(id);
+    const issue = await Issue.findById(id);
 
-    if (!comment) {
+    if (!issue) {
       return res.status(404).json({
         success: false,
-        message: "Comment not found"
+        message: "Issue not found"
       });
     }
+    const studentId = req.user._id;
+    // Check access
+    if (req.user.role === "student") {
+      if (!studentId || issue.raised_by.toString() !== studentId.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. You can only update your own issues"
+        });
+      }
 
-    // Check access: only creator or admin/staff can delete
-    if (comment.commented_by.toString() !== req.user._id.toString() && 
-        req.user.role !== "admin" && req.user.role !== "staff") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. You can only delete your own comments"
-      });
+      // Students can only update pending issues
+      if (issue.status !== "pending") {
+        return res.status(400).json({
+          success: false,
+          message: "You can only update pending issues"
+        });
+      }
     }
 
-    await IssueComment.findByIdAndDelete(id);
+    // Update fields
+    if (title) {
+      if (title.trim().length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: "Title must be at least 3 characters long"
+        });
+      }
+      issue.title = title.trim();
+    }
+
+    if (description) {
+      if (description.trim().length < 10) {
+        return res.status(400).json({
+          success: false,
+          message: "Description must be at least 10 characters long"
+        });
+      }
+      if (description.trim().length > 500) {
+        return res.status(400).json({
+          success: false,
+          message: "Description must not exceed 500 characters"
+        });
+      }
+      issue.description = description.trim();
+    }
+
+    if (category) {
+      const validCategories = ["drinking-water", "plumbing", "furniture", "electricity", "other"];
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({
+          success: false,
+          message: `Category must be one of: ${validCategories.join(", ")}`
+        });
+      }
+      issue.category = category;
+    }
+
+    await issue.save();
+    await issue.populate({
+      path: "raised_by",
+      select: "sid branch room_number block",
+      populate: {
+        path: "user_id",
+        select: "full_name email phone"
+      }
+    });
 
     return res.status(200).json({
       success: true,
-      message: "Comment deleted successfully"
+      issue,
+      message: "Issue updated successfully"
     });
 
   } catch (error) {
-    console.error("DELETE COMMENT", error);
-    
+    console.error("UPDATE ISSUE", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update issue"
+    });
+  }
+};
+
+// Delete issue (student can delete own pending issues, admin/staff can delete any)
+const deleteIssue = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found"
+      });
+    }
+
+    // Check access
+    if (req.user.role === "student") {
+      const student = await Student.findOne({ user_id: req.user._id });
+      if (!student || issue.raised_by.toString() !== student._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied"
+        });
+      }
+
+      // Students can only delete pending issues
+      if (issue.status !== "pending") {
+        return res.status(400).json({
+          success: false,
+          message: "You can only delete pending issues"
+        });
+      }
+    }
+
+    await Issue.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Issue deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("DELETE ISSUE", error);
+
     if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
-        message: "Invalid comment ID"
+        message: "Invalid issue ID"
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: "Failed to delete comment"
+      message: "Failed to delete issue"
     });
   }
 };
 
 export {
-  createComment,
-  getIssueComments,
-  getComment,
-  updateComment,
-  deleteComment
+  createIssue,
+  getAllIssues,
+  getIssue,
+  updateIssueStatus,
+  updateIssue,
+  deleteIssue
 };
-
