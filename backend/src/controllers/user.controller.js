@@ -127,5 +127,4 @@ export {
   staff,
   admin,
   student,
-
 };
