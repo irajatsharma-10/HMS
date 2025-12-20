@@ -5,7 +5,6 @@ import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
-
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -16,17 +15,9 @@ app.use(
 
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-
-
 app.use(cookieParser());
-
-
 app.use(express.static("public"));
-
-
 app.use("/api/v1", userRoutes);
-
-
 app.use((err, _req, res, _next) => {
   if (err?.status === 413) {
     return res.status(413).json({

@@ -1,24 +1,9 @@
 import User from "../models/user.model.js";
-
-const generateAcessAndRefreshToken = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  const accessToken = user.generateAccessToken();
-  const refreshToken = user.generateRefreshToken();
-
-  user.refreshToken = refreshToken;
-  await user.save({ validateBeforeSave: false });
-
-  return { accessToken, refreshToken };
-};
+import bcrypt from "bcryptjs";
 
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -27,28 +12,33 @@ const login = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    if (!user || user.password !== password) {
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email"
+      });
+    }
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.password
+    );
+    if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password"
       });
     }
+    const accessToken = user.generateAccessToken();
+    const sanitizedUser = user
+    sanitizedUser.password = undefined;
 
-    const { accessToken, refreshToken } =
-      await generateAcessAndRefreshToken(user._id);
 
-    const sanitizedUser = await User.findById(user._id).select(
-      "-password -refreshToken"
-    );
 
     return res
       .cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: false
-      })
-      .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: false
+        secure: false,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24)
       })
       .status(200)
       .json({
@@ -66,25 +56,11 @@ const login = async (req, res) => {
   }
 };
 
-const allData = async (_req, res) => {
-  try {
-    const users = await User.find({});
-    return res.status(200).json({
-      success: true,
-      users
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch users"
-    });
-  }
-};
-
-const addData = async (req, res) => {
+//Add
+const addUser = async (req, res) => {
   try {
     const { full_name, email, phone, password, role } = req.body;
-
+    console.log("addUser called")
     if (!full_name || !email || !phone || !password) {
       return res.status(400).json({
         success: false,
@@ -99,18 +75,19 @@ const addData = async (req, res) => {
         message: "User already exists"
       });
     }
-
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       full_name,
       email,
       phone,
-      password,
-      role: role || "Student"
+      password: hashedPassword,
+      role: role || "student"
     });
-
+    const sanitizedUser = user.toObject();
+    delete sanitizedUser.password;
     return res.status(201).json({
       success: true,
-      user,
+      user: sanitizedUser,
       message: "User added successfully"
     });
 
@@ -145,11 +122,10 @@ const admin = async (_req, res) => {
 };
 
 export {
-  allData,
-  addData,
+  addUser,
   login,
   staff,
   admin,
   student,
-  generateAcessAndRefreshToken
+
 };

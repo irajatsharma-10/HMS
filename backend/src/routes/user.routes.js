@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { login, addData, allData, student, staff, admin } from "../controllers/user.controller.js";
-import { auth, isStaff, isAdmin, isStudent } from "../middlewares/auth.js";
+import { login, student, staff, admin, addUser } from "../controllers/user.controller.js";
+import { auth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/role.auth.js"
 
 const router = Router();
 
-router.get("/",allData);
-router.post("/add", addData)
+router.post("/adduser", addUser);
 router.post("/login", login);
-router.get("/student", auth, isStudent, student);
-router.get("/admin", auth, isAdmin, admin);
-router.get("/staff", auth, isStaff, staff);
+router.get("/student", auth, authorizeRoles("student"), student);
+router.get("/admin", auth, authorizeRoles("admin"), admin);
+router.get("/staff", auth, authorizeRoles("staff"), staff);
 
 export default router;
