@@ -24,7 +24,7 @@ const studentSchema = new Schema(
       trim: true
     },
     guardian_contact: {
-      type: Number,
+      type: String,
       required: true,
       minLength: 10,
       maxLength: 10,
@@ -33,7 +33,7 @@ const studentSchema = new Schema(
       type: Date,
       default: null
     },
-    branch: {
+    branch: { 
       type: String,
       required: true,
       trim: true,

@@ -5,7 +5,7 @@ import { authorizeRoles } from "../middlewares/role.auth.js"
 
 const router = Router();
 
-router.post("/adduser", addUser);
+router.post("/adduser", auth, authorizeRoles("admin"), addUser);
 router.post("/login", login);
 router.get("/student", auth, authorizeRoles("student"), student);
 router.get("/admin", auth, authorizeRoles("admin"), admin);
