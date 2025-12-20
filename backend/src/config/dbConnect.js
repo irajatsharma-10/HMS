@@ -1,15 +1,17 @@
 import mongoose from "mongoose";
 
 
-
 const dbConnect = async () => {
-    try {
-        const connectionInstance = await mongoose.connect(`${process.env.MONGODB_URI}` || '', {})
-        console.log(`MongoDB connected !! DB HOST: ${connectionInstance.connection.host}`);
-    } catch (error) {
-        console.log("MONGODB connection FAILED ", error);
-        process.exit(1)
-    }
-}
+  try {
+    const connectionInstance = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.info(`MongoDB connected - Host: ${connectionInstance.connection.host}`);
+  } catch (error) {
+    console.error("MongoDB connection failed", error);
+    process.exit(1);
+  }
+};
 
-export default dbConnect
+export default dbConnect;

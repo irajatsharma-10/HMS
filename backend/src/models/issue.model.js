@@ -10,13 +10,12 @@ const issueSchema = new Schema({
         required: true,
         type: String,
         trim: true,
-        lowercase: true,
-        min: [10, "Minimum character are required"],
-        max: [100, "Word limit reached "]
+        minLength: [10, "Minimum 10 characters are required"],
+        maxLength: [500, "Maximum 500 characters allowed"]
     },
     category:{
         type: String,
-        default: "DrinkingWater",
+        default: "other",
         enum: ["drinking-water", "plumbing", "furniture", "electricity", "other"]
     },
     status:{
